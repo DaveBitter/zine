@@ -140,8 +140,12 @@ function drawGuideLines(ctx: CanvasRenderingContext2D, side: SheetSide, scale: n
   }
 }
 
-/** Small legend printed in a bottom corner of the guide sheet so it's self-explanatory once on paper, away from the app UI. */
-function drawLegend(ctx: CanvasRenderingContext2D, scale: number, paperHeightMm: number) {
+/** Small legend printed in a bottom corner of the guide sheet so it's self-explanatory once on paper, away from the app UI. Only lists the guide kinds actually present on this sheet side (saddle-stitch sheets have no cut line, for example). */
+function drawLegend(ctx: CanvasRenderingContext2D, side: SheetSide, scale: number, paperHeightMm: number) {
+  const hasFold = side.guides.some((g) => g.kind === "fold");
+  const hasCut = side.guides.some((g) => g.kind === "cut");
+  if (!hasFold && !hasCut) return;
+
   const fontSize = Math.round(paperHeightMm * scale * 0.022);
   const margin = paperHeightMm * scale * 0.02;
   const x = margin;
@@ -151,10 +155,14 @@ function drawLegend(ctx: CanvasRenderingContext2D, scale: number, paperHeightMm:
   ctx.font = `${fontSize}px sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = "#3355c9";
-  ctx.fillText("- - - fold", x, bottomY - fontSize * 1.4);
-  ctx.fillStyle = "#c1440e";
-  ctx.fillText("— cut ✂", x, bottomY);
+  if (hasFold) {
+    ctx.fillStyle = "#3355c9";
+    ctx.fillText("- - - fold", x, hasCut ? bottomY - fontSize * 1.4 : bottomY);
+  }
+  if (hasCut) {
+    ctx.fillStyle = "#c1440e";
+    ctx.fillText("— cut ✂", x, bottomY);
+  }
   ctx.restore();
 }
 
@@ -193,7 +201,7 @@ export async function renderSheetToCanvas(
       drawGuidePanel(ctx, panel, project, scale);
     }
     drawGuideLines(ctx, side, scale, paper.height);
-    drawLegend(ctx, scale, paper.height);
+    drawLegend(ctx, side, scale, paper.height);
   }
 
   return canvas;

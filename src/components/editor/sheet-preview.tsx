@@ -190,15 +190,19 @@ function SheetSideSvg({
       </svg>
       {mode === "guide" && (
         <p className="flex shrink-0 items-center gap-3 text-xs text-[var(--color-text-muted)]">
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-0 w-4 border-t-2 border-dashed" style={{ borderColor: "#3355c9" }} />
-            fold
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-0 w-4 border-t-2" style={{ borderColor: "#c1440e" }} />
-            cut
-            <Scissors size={12} />
-          </span>
+          {side.guides.some((g) => g.kind === "fold") && (
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-0 w-4 border-t-2 border-dashed" style={{ borderColor: "#3355c9" }} />
+              fold
+            </span>
+          )}
+          {side.guides.some((g) => g.kind === "cut") && (
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-0 w-4 border-t-2" style={{ borderColor: "#c1440e" }} />
+              cut
+              <Scissors size={12} />
+            </span>
+          )}
         </p>
       )}
     </div>
