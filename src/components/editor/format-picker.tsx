@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { BookOpen, Layers } from "lucide-react";
 import { useZineProject } from "@/hooks/zine-project-context";
 import { ZineFormat } from "@/lib/zine-layouts/types";
@@ -9,7 +10,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const SADDLE_STITCH_PAGE_OPTIONS = [8, 12, 16, 20, 24, 28, 32];
 
 export function FormatPicker() {
-  const { createProject } = useZineProject();
+  const { project, createProject } = useZineProject();
+  const router = useRouter();
   const [format, setFormat] = useState<ZineFormat>("mini-zine-8");
   const [pageCount, setPageCount] = useState(16);
 
@@ -81,7 +83,13 @@ export function FormatPicker() {
 
       <button
         type="button"
-        onClick={() => createProject(format, format === "mini-zine-8" ? 8 : pageCount)}
+        onClick={() => {
+          if (project && !confirm("Starting a new zine discards the one you're currently editing. Continue?")) {
+            return;
+          }
+          createProject(format, format === "mini-zine-8" ? 8 : pageCount);
+          router.push("/editor/design");
+        }}
         className="w-fit rounded-lg bg-[var(--color-accent)] px-5 py-2.5 text-sm font-medium text-[var(--color-accent-contrast)] transition hover:opacity-90"
       >
         Start designing

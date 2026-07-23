@@ -44,9 +44,17 @@ function ContentPanel({ panel, project }: { panel: Panel; project: ZineProject }
   const rotation = panel.rotationDeg ? `rotate(${panel.rotationDeg} ${cx} ${cy})` : undefined;
 
   if (panel.logicalPage === 0 || !page) {
-    // blank padding page
+    // blank padding page — stroked so an empty sheet still visibly shows where one page ends and the next begins
     return (
-      <rect x={panel.x} y={panel.y} width={panel.width} height={panel.height} fill="var(--color-surface-muted)" />
+      <rect
+        x={panel.x}
+        y={panel.y}
+        width={panel.width}
+        height={panel.height}
+        fill="var(--color-surface-muted)"
+        stroke="var(--color-border)"
+        strokeWidth={0.3}
+      />
     );
   }
 
@@ -63,7 +71,18 @@ function ContentPanel({ panel, project }: { panel: Panel; project: ZineProject }
         const clipId = `panel-clip-${panel.x}-${panel.y}-${panel.logicalPage}-${i}`;
 
         if (!photo) {
-          return <rect key={i} x={slotX} y={slotY} width={slotWidth} height={slotHeight} fill="var(--color-surface-muted)" />;
+          return (
+            <rect
+              key={i}
+              x={slotX}
+              y={slotY}
+              width={slotWidth}
+              height={slotHeight}
+              fill="var(--color-surface-muted)"
+              stroke="var(--color-border)"
+              strokeWidth={0.3}
+            />
+          );
         }
 
         const rect = computeCoverDraw(photo.naturalWidth, photo.naturalHeight, slotWidth, slotHeight, photo.transform);

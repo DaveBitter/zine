@@ -25,6 +25,7 @@ type Action =
   | { type: "SET_PAGE_COUNT"; pageCount: number }
   | { type: "SET_LAYOUT"; logicalPage: number; layout: PageLayoutId }
   | { type: "SET_PHOTO"; logicalPage: number; slotIndex: number; photo: ProjectPhoto }
+  | { type: "SET_PHOTOS_BATCH"; assignments: { logicalPage: number; slotIndex: number; photo: ProjectPhoto }[] }
   | { type: "REMOVE_PHOTO"; logicalPage: number; slotIndex: number }
   | { type: "UPDATE_TRANSFORM"; logicalPage: number; slotIndex: number; transform: PhotoTransform }
   | { type: "SET_CAPTION"; logicalPage: number; caption: string }
@@ -72,6 +73,25 @@ function reducer(state: ZineProject | null, action: Action): ZineProject | null 
           if (p.logicalPage !== action.logicalPage) return p;
           const photos = [...p.photos];
           photos[action.slotIndex] = action.photo;
+          return { ...p, photos };
+        }),
+      };
+    }
+    case "SET_PHOTOS_BATCH": {
+      if (!state) return state;
+      const byPage = new Map<number, { slotIndex: number; photo: ProjectPhoto }[]>();
+      for (const a of action.assignments) {
+        const list = byPage.get(a.logicalPage) ?? [];
+        list.push({ slotIndex: a.slotIndex, photo: a.photo });
+        byPage.set(a.logicalPage, list);
+      }
+      return {
+        ...state,
+        pages: state.pages.map((p) => {
+          const assignments = byPage.get(p.logicalPage);
+          if (!assignments) return p;
+          const photos = [...p.photos];
+          for (const { slotIndex, photo } of assignments) photos[slotIndex] = photo;
           return { ...p, photos };
         }),
       };
@@ -197,10 +217,9 @@ export function ZineProjectProvider({ children }: { children: React.ReactNode })
       }
 
       const usable = files.slice(0, targets.length);
-      for (let i = 0; i < usable.length; i++) {
-        const photo = await loadProjectPhoto(usable[i]);
-        dispatch({ type: "SET_PHOTO", logicalPage: targets[i].logicalPage, slotIndex: targets[i].slotIndex, photo });
-      }
+      const photos = await Promise.all(usable.map(loadProjectPhoto));
+      const assignments = targets.slice(0, usable.length).map((t, i) => ({ ...t, photo: photos[i] }));
+      dispatch({ type: "SET_PHOTOS_BATCH", assignments });
 
       return { added: usable.length, skipped: files.length - usable.length };
     },
