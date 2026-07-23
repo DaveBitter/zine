@@ -5,6 +5,7 @@ import { RotateCcw } from "lucide-react";
 import { ZineProjectProvider, useZineProject } from "@/hooks/zine-project-context";
 import { FormatPicker } from "@/components/editor/format-picker";
 import { PageThumbnailList } from "@/components/editor/page-thumbnail-list";
+import { BulkPhotoUpload } from "@/components/editor/bulk-photo-upload";
 import { PageCanvasEditor } from "@/components/editor/page-canvas-editor";
 import { SheetPreview } from "@/components/editor/sheet-preview";
 import { PrivacyNotice } from "@/components/editor/privacy-notice";
@@ -40,6 +41,7 @@ function EditorShell() {
       <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[180px_260px_1fr] lg:gap-4">
         <section className="flex flex-col gap-1.5 lg:min-h-0 lg:self-start">
           <h2 className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wide">Pages</h2>
+          <BulkPhotoUpload />
           <PageThumbnailList activePage={activePage} onSelect={setActivePage} />
         </section>
 

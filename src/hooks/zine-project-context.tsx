@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useReducer } from "react";
-import { DEFAULT_PHOTO_TRANSFORM, PhotoTransform, clampTransform } from "@/lib/image-transform";
+import { PhotoTransform, clampTransform } from "@/lib/image-transform";
+import { loadProjectPhoto } from "@/lib/load-project-photo";
 import { DEFAULT_LAYOUT_ID, PAGE_LAYOUTS, PageLayoutId } from "@/lib/page-layouts";
 import { DEFAULT_PAPER_SIZE_ID } from "@/lib/zine-layouts/paper-sizes";
 import { ZineFormat } from "@/lib/zine-layouts/types";
@@ -27,6 +28,7 @@ type Action =
   | { type: "REMOVE_PHOTO"; logicalPage: number; slotIndex: number }
   | { type: "UPDATE_TRANSFORM"; logicalPage: number; slotIndex: number; transform: PhotoTransform }
   | { type: "SET_CAPTION"; logicalPage: number; caption: string }
+  | { type: "SWAP_PAGES"; a: number; b: number }
   | { type: "RESET_PROJECT" };
 
 function reducer(state: ZineProject | null, action: Action): ZineProject | null {
@@ -109,6 +111,24 @@ function reducer(state: ZineProject | null, action: Action): ZineProject | null 
         ),
       };
     }
+    case "SWAP_PAGES": {
+      if (!state || action.a === action.b) return state;
+      const pageA = state.pages.find((p) => p.logicalPage === action.a);
+      const pageB = state.pages.find((p) => p.logicalPage === action.b);
+      if (!pageA || !pageB) return state;
+      return {
+        ...state,
+        pages: state.pages.map((p) => {
+          if (p.logicalPage === action.a) {
+            return { ...p, layout: pageB.layout, photos: pageB.photos, caption: pageB.caption };
+          }
+          if (p.logicalPage === action.b) {
+            return { ...p, layout: pageA.layout, photos: pageA.photos, caption: pageA.caption };
+          }
+          return p;
+        }),
+      };
+    }
     default:
       return state;
   }
@@ -124,6 +144,8 @@ interface ZineProjectContextValue {
   removeSlotPhoto: (logicalPage: number, slotIndex: number) => void;
   updateTransform: (logicalPage: number, slotIndex: number, transform: PhotoTransform) => void;
   setCaption: (logicalPage: number, caption: string) => void;
+  addPhotosInOrder: (files: File[]) => Promise<{ added: number; skipped: number }>;
+  swapPages: (a: number, b: number) => void;
 }
 
 const ZineProjectContext = createContext<ZineProjectContextValue | null>(null);
@@ -146,23 +168,7 @@ export function ZineProjectProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const setSlotPhoto = useCallback(async (logicalPage: number, slotIndex: number, file: File) => {
-    const objectUrl = URL.createObjectURL(file);
-    const { naturalWidth, naturalHeight } = await new Promise<{
-      naturalWidth: number;
-      naturalHeight: number;
-    }>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve({ naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight });
-      img.onerror = () => reject(new Error("Could not read that image file."));
-      img.src = objectUrl;
-    });
-    const photo: ProjectPhoto = {
-      id: crypto.randomUUID(),
-      objectUrl,
-      naturalWidth,
-      naturalHeight,
-      transform: DEFAULT_PHOTO_TRANSFORM,
-    };
+    const photo = await loadProjectPhoto(file);
     dispatch({ type: "SET_PHOTO", logicalPage, slotIndex, photo });
   }, []);
 
@@ -178,6 +184,33 @@ export function ZineProjectProvider({ children }: { children: React.ReactNode })
     dispatch({ type: "SET_CAPTION", logicalPage, caption });
   }, []);
 
+  /** Fills empty slots in page/slot order across the whole project, first page first, skipping slots that already have a photo. Extra files beyond the number of empty slots are left unplaced. */
+  const addPhotosInOrder = useCallback(
+    async (files: File[]) => {
+      if (!project || files.length === 0) return { added: 0, skipped: files.length };
+
+      const targets: { logicalPage: number; slotIndex: number }[] = [];
+      for (const page of project.pages) {
+        page.photos.forEach((photo, slotIndex) => {
+          if (!photo) targets.push({ logicalPage: page.logicalPage, slotIndex });
+        });
+      }
+
+      const usable = files.slice(0, targets.length);
+      for (let i = 0; i < usable.length; i++) {
+        const photo = await loadProjectPhoto(usable[i]);
+        dispatch({ type: "SET_PHOTO", logicalPage: targets[i].logicalPage, slotIndex: targets[i].slotIndex, photo });
+      }
+
+      return { added: usable.length, skipped: files.length - usable.length };
+    },
+    [project],
+  );
+
+  const swapPages = useCallback((a: number, b: number) => {
+    dispatch({ type: "SWAP_PAGES", a, b });
+  }, []);
+
   const value = useMemo(
     () => ({
       project,
@@ -189,8 +222,22 @@ export function ZineProjectProvider({ children }: { children: React.ReactNode })
       removeSlotPhoto,
       updateTransform,
       setCaption,
+      addPhotosInOrder,
+      swapPages,
     }),
-    [project, createProject, resetProject, setPageCount, setPageLayout, setSlotPhoto, removeSlotPhoto, updateTransform, setCaption],
+    [
+      project,
+      createProject,
+      resetProject,
+      setPageCount,
+      setPageLayout,
+      setSlotPhoto,
+      removeSlotPhoto,
+      updateTransform,
+      setCaption,
+      addPhotosInOrder,
+      swapPages,
+    ],
   );
 
   return <ZineProjectContext.Provider value={value}>{children}</ZineProjectContext.Provider>;

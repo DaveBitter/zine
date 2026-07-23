@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useZineProject } from "@/hooks/zine-project-context";
 import { getPageLabel } from "@/lib/page-label";
 import { getPageAspectRatio } from "@/lib/page-aspect";
@@ -13,7 +14,8 @@ interface PageThumbnailListProps {
 }
 
 export function PageThumbnailList({ activePage, onSelect }: PageThumbnailListProps) {
-  const { project } = useZineProject();
+  const { project, swapPages } = useZineProject();
+  const [dragOver, setDragOver] = useState<number | null>(null);
   if (!project) return null;
 
   const aspect = getPageAspectRatio(project.format, PAPER_SIZES[project.paperId]);
@@ -24,11 +26,31 @@ export function PageThumbnailList({ activePage, onSelect }: PageThumbnailListPro
         <li key={page.logicalPage}>
           <button
             type="button"
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("text/plain", String(page.logicalPage));
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              setDragOver(page.logicalPage);
+            }}
+            onDragLeave={() => setDragOver((cur) => (cur === page.logicalPage ? null : cur))}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(null);
+              const from = Number(e.dataTransfer.getData("text/plain"));
+              if (from && from !== page.logicalPage) swapPages(from, page.logicalPage);
+            }}
             onClick={() => onSelect(page.logicalPage)}
+            title="Drag onto another page to swap their photos"
             className={`flex w-full items-center gap-2 rounded-lg border p-1.5 text-left transition ${
-              activePage === page.logicalPage
-                ? "border-[var(--color-accent)] bg-[var(--color-surface)]"
-                : "border-transparent hover:bg-[var(--color-surface)]/60"
+              dragOver === page.logicalPage
+                ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10"
+                : activePage === page.logicalPage
+                  ? "border-[var(--color-accent)] bg-[var(--color-surface)]"
+                  : "border-transparent hover:bg-[var(--color-surface)]/60"
             }`}
           >
             <div
