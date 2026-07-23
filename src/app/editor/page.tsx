@@ -18,10 +18,10 @@ function EditorShell() {
   if (!project) return <FormatPicker />;
 
   return (
-    <div className="mx-auto flex h-dvh max-w-7xl flex-col gap-2 overflow-hidden px-4 py-3">
+    <div className="mx-auto flex min-h-dvh max-w-7xl flex-col gap-4 px-4 py-4 lg:h-dvh lg:gap-2 lg:overflow-hidden lg:py-3">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-base font-semibold text-[var(--color-text)]">Editing your zine</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <PrivacyNotice />
           <ThemeToggle />
           <button
@@ -37,23 +37,23 @@ function EditorShell() {
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[180px_260px_1fr]">
-        <section className="flex min-h-0 flex-col gap-1.5 self-start">
+      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[180px_260px_1fr] lg:gap-4">
+        <section className="flex flex-col gap-1.5 lg:min-h-0 lg:self-start">
           <h2 className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wide">Pages</h2>
           <PageThumbnailList activePage={activePage} onSelect={setActivePage} />
         </section>
 
-        <section className="flex min-h-0 flex-col gap-1.5 self-start">
+        <section className="flex flex-col gap-1.5 lg:min-h-0 lg:self-start">
           <h2 className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wide">Edit page</h2>
           <PageCanvasEditor logicalPage={activePage} />
         </section>
 
-        <section className="flex min-h-0 flex-col gap-2">
-          <div className="flex min-h-0 flex-1 flex-col gap-1.5">
+        <section className="flex flex-col gap-2 lg:min-h-0">
+          <div className="flex flex-col gap-1.5 lg:min-h-0 lg:flex-1">
             <h2 className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
               Sheet preview
             </h2>
-            <div className="min-h-0 flex-1">
+            <div className="lg:min-h-0 lg:flex-1">
               <SheetPreview project={project} />
             </div>
           </div>

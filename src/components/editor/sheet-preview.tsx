@@ -125,12 +125,13 @@ function SheetSideSvg({
   title: string;
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1">
+    <div className="flex flex-col gap-1 lg:h-full lg:min-h-0">
       <p className="shrink-0 text-xs text-[var(--color-text-muted)]">{title}</p>
       <svg
         viewBox={`0 0 ${paper.width} ${paper.height}`}
         preserveAspectRatio="xMidYMid meet"
-        className="min-h-0 w-full flex-1"
+        className="w-full lg:min-h-0 lg:flex-1"
+        style={{ aspectRatio: `${paper.width} / ${paper.height}` }}
       >
         <rect x={0} y={0} width={paper.width} height={paper.height} fill="white" stroke="var(--color-border)" strokeWidth={0.5} />
         {side.panels.map((panel) =>
@@ -213,7 +214,7 @@ export function SheetPreview({ project }: SheetPreviewProps) {
   const [mode, setMode] = useState<PreviewMode>("content");
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2">
+    <div className="flex flex-col gap-2 lg:h-full lg:min-h-0">
       <div className="inline-flex w-fit shrink-0 gap-1 rounded-lg border border-[var(--color-border)] p-1">
         <button
           type="button"
@@ -242,13 +243,13 @@ export function SheetPreview({ project }: SheetPreviewProps) {
       </div>
 
       {mode === "steps" ? (
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           <FoldStepsGuide format={project.format} />
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
+        <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           {layout.sheets.map((sheet: Sheet) => (
-            <div key={sheet.index} className={`grid min-h-0 flex-1 gap-3 ${sheet.back ? "sm:grid-cols-2" : "grid-cols-1"}`}>
+            <div key={sheet.index} className={`grid gap-3 lg:min-h-0 lg:flex-1 ${sheet.back ? "sm:grid-cols-2" : "grid-cols-1"}`}>
               <SheetSideSvg
                 side={sheet.front}
                 paper={layout.paper}
