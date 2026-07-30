@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
+
+const GA_MEASUREMENT_ID = "G-X507F8NDWH";
 
 const title = "Zine";
 const description =
@@ -39,6 +42,13 @@ export default function RootLayout({
               "try{var t=localStorage.getItem('zine-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}",
           }}
         />
+        <Script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
+        <Script id="ga-init" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_MEASUREMENT_ID}');`}
+        </Script>
       </head>
       <body>{children}</body>
     </html>
